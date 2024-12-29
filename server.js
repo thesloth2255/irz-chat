@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path'); // Required for resolving file paths
 const app = express();
 
-const PORT = process.env.PORT || 3000; // Use Render's PORT or default to 3000
+// Use the PORT environment variable provided by Render or default to 3000
+const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON and serve static files
 app.use(express.json());
