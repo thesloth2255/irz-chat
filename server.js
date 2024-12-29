@@ -1,44 +1,43 @@
 const express = require('express');
 const fs = require('fs');
+const path = require('path'); // Required for resolving file paths
 const app = express();
-const PORT = 3000;
 
-// Middleware to parse JSON data
+const PORT = process.env.PORT || 3000; // Use Render's PORT or default to 3000
+
+// Middleware to parse JSON and serve static files
 app.use(express.json());
-app.use(express.static('public')); // Serve the chat HTML file
+app.use(express.static('public')); // Serve files from the 'public' folder
 
-// Path to the messages file
-const messagesFile = 'messages.json';
-
-// Read messages from the file
-function getMessages() {
-    if (fs.existsSync(messagesFile)) {
-        return JSON.parse(fs.readFileSync(messagesFile, 'utf-8'));
-    }
-    return [];
-}
-
-// Save messages to the file
-function saveMessages(messages) {
-    fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
-}
-
-// Endpoint to get all messages
-app.get('/messages', (req, res) => {
-    const messages = getMessages();
-    res.json(messages);
+// Root route to serve chat.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
-// Endpoint to post a new message
+// API endpoint to get all messages
+app.get('/messages', (req, res) => {
+    const messagesFile = 'messages.json';
+    if (fs.existsSync(messagesFile)) {
+        const messages = JSON.parse(fs.readFileSync(messagesFile, 'utf-8'));
+        res.json(messages);
+    } else {
+        res.json([]);
+    }
+});
+
+// API endpoint to save a new message
 app.post('/messages', (req, res) => {
-    const messages = getMessages();
+    const messagesFile = 'messages.json';
+    const messages = fs.existsSync(messagesFile)
+        ? JSON.parse(fs.readFileSync(messagesFile, 'utf-8'))
+        : [];
     const newMessage = req.body;
     messages.push(newMessage);
-    saveMessages(messages);
+    fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
     res.status(201).json({ message: 'Message saved!' });
 });
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
